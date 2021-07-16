@@ -3,6 +3,9 @@
 
 from __future__ import absolute_import, unicode_literals
 
+from PIL import Image
+import PIL
+
 import collections
 import contextlib
 import copy
@@ -2461,6 +2464,18 @@ class YoutubeDL(object):
                 try:
                     uf = self.urlopen(t['url'])
                     with open(encodeFilename(thumb_filename), 'wb') as thumbf:
+                    if info_dict['extractor'] == 'youtube':
+                        img_for_size=PIL.Image.open(thumb_filename)
+                        width_image, height_image = img_for_size.size
+                        if width_image == 1280 and height_image == 720:
+                            self.to_screen('[%s] %s: Resizing thumbnail %sto: 720x720px' %
+                                (info_dict['extractor'], info_dict['id'], thumb_display_id))
+                            img=Image.open(thumb_filename)
+                            b=(280,0,1000,720)
+                            c_i=img.crop(box=b)
+                            c_i.save(thumb_filename)
+                        else :
+                            pass
                         shutil.copyfileobj(uf, thumbf)
                     self.to_screen('[%s] %s: Writing thumbnail %sto: %s' %
                                    (info_dict['extractor'], info_dict['id'], thumb_display_id, thumb_filename))
