@@ -3,6 +3,9 @@
 
 from __future__ import absolute_import, unicode_literals
 
+from PIL import Image
+import PIL
+
 import collections
 import contextlib
 import copy
@@ -770,15 +773,10 @@ class YoutubeDL(object):
         '''Set the keys from extra_info in info dict if they are missing'''
         for key, value in extra_info.items():
             info_dict.setdefault(key, value)
-
-    def extract_info(self, url, download=True, ie_key=None, extra_info={},
-                     process=True, force_generic_extractor=False):
-        """
+ """
         Return a list with a dictionary for each video extracted.
-
         Arguments:
         url -- URL to extract
-
         Keyword arguments:
         download -- whether to download videos during extraction
         ie_key -- extractor key hint
@@ -787,6 +785,13 @@ class YoutubeDL(object):
             must be True for download to work.
         force_generic_extractor -- force using the generic extractor
         """
+    def extract_info(self, url, download=True, ie_key=None, extra_info={},
+                     process=True, force_generic_extractor=False):
+        '''
+        Returns a list with a dictionary for each video we find.
+        If 'download', also downloads the videos.
+        extra_info is a dict containing the extra values to add to each result
+        '''
 
         if not ie_key and force_generic_extractor:
             ie_key = 'Generic'
@@ -2462,6 +2467,18 @@ class YoutubeDL(object):
                     uf = self.urlopen(t['url'])
                     with open(encodeFilename(thumb_filename), 'wb') as thumbf:
                         shutil.copyfileobj(uf, thumbf)
+                    if info_dict['extractor'] == 'youtube':
+                        img_for_size=PIL.Image.open(thumb_filename)
+                        width_image, height_image = img_for_size.size
+                        if width_image == 1280 and height_image == 720:
+                            self.to_screen('[%s] %s: Resizing thumbnail %sto: 720x720px' %
+                                   (info_dict['extractor'], info_dict['id'], thumb_display_id))
+                            img=Image.open(thumb_filename)
+                            b=(280,0,1000,720)
+                            c_i=img.crop(box=b)
+                            c_i.save(thumb_filename)
+                        else :
+                            pass
                     self.to_screen('[%s] %s: Writing thumbnail %sto: %s' %
                                    (info_dict['extractor'], info_dict['id'], thumb_display_id, thumb_filename))
                 except (compat_urllib_error.URLError, compat_http_client.HTTPException, socket.error) as err:
